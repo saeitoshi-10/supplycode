@@ -5,6 +5,7 @@ import About from './pages/About';
 import Services from './pages/Services';
 import Contact from './pages/Contact';
 import MilestoneBoard from './pages/Meeting';
+import Login from './pages/Login';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path='/contact' element={<Contact />} />
           <Route path='/' element={<Home />} />
           <Route path='/milestone' element={<MilestoneBoard />} /> 
+          <Route path='/login' element={<Login />} />
         </Routes>
       </Layout>
     </Router>

@@ -1,4 +1,4 @@
-import Button from './Button';
+import {Button} from "./ui/button";
 import reactLogo from '../assets/react.svg';
 import { Link } from 'react-router-dom'; // or use next/link if using Next.js
 
