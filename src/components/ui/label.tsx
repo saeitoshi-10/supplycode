@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 "use client"
 
-=======
->>>>>>> 01b7820 (issue creation for the milestone)
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 
