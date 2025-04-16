@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/MeetingUI/card";
-import { Button } from "@/components/MeetingUI/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CustomCalendar } from "@/components/MeetingUI/calendar";
 import { motion } from "framer-motion";
 import { FiPlus } from "react-icons/fi";
