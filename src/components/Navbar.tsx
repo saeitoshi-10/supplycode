@@ -18,25 +18,25 @@ export default function Navbar() {
       <div className="space-x-4 text-sm md:flex">
         <Button
           variant="ghost"
-          className="text-white px-4 py-2"
+          className="text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white"
         >
           <Link to="/about">Products</Link>
         </Button>
         <Button
           variant="ghost"
-          className="text-white px-4 py-2"
+          className="text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white"
         >
           <Link to="/services">Services</Link>
         </Button>
         <Button
           variant="ghost"
-          className="text-white px-4 py-2"
+          className="text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white"
         >
           <Link to="/contact">Contact</Link>
         </Button>
         <Button
           variant="ghost"
-          className="text-white px-4 py-2"
+          className="bg-transparent text-blue-600 border border-blue-600 px-4 py-2 rounded-lg shadow-sm hover:bg-blue-600 hover:text-white transition-all duration-300"
         >
           <Link to="/login">Log in</Link>
         </Button>
@@ -44,7 +44,7 @@ export default function Navbar() {
         {/* Sign Up Button */}
         <Button
           variant="outline"
-          className="border border-white text-white px-4 py-2"
+          className="bg-blue-600 text-white border border-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-transparent hover:text-blue-600"
         >
           <Link to="/signup">Sign up</Link>
         </Button>

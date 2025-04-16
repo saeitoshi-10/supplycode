@@ -1,7 +1,7 @@
 
 const Login = () => {
   return (
-    <div className="max-w-md mx-auto text-center mt-16 p-4">
+    <div className="max-w-md h-screen mx-auto text-center mt-50 p-4">
       <h2 className="text-3xl font-bold text-gray-900 mb-2">team<span className="text-blue-500">.</span></h2>
       <p className="text-lg text-gray-700 mb-1">Get started with our modern project<br />management software</p>
       <p className="text-sm text-gray-500 mb-6">14 day free trial. No credit card required</p>
