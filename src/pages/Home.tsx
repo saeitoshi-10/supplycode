@@ -10,7 +10,7 @@ export default function LandingPage() {
       ></div>
 
       {/* Optional overlay */}
-      <div className="absolute top-0 left-0 w-full h-full bg-white/80 backdrop-blur-sm z-0"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-white/30 backdrop-blur-xs z-0"></div>
 
       {/* Content */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center">

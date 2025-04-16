@@ -1,117 +1,164 @@
-
+import React, { useState } from "react";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+
 
 const formSchema = z.object({
-  name: z.string().min(1, "Issue name is required"),
-  deadline: z.string().min(1, "Deadline is required"),
-  assignee: z.string().min(1, "Assignee is required"),
+  projectName: z.string().min(1, "Project name is required"),
+  initType: z.enum(["create", "github"]),
+  githubRepo: z
+    .string()
+    .url("Must be a valid URL")
+    .regex(
+      /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/,
+      "Must be a valid GitHub repository URL"
+    )
+    .optional()
+    .or(z.literal("")), 
+  email: z.string().email("Invalid email"),
+  organization: z.string().min(1, "Organization is required"),
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function ProjectForm() {
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
+
+const ProjectForm = () => {
+  const [contributorInput, setContributorInput] = useState("");
+  const [contributors, setContributors] = useState<string[]>([]);
+  const [initType, setInitType] = useState<"create" | "github">("create");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      deadline: "",
-      assignee: "",
+      projectName: "",
+      initType: "create",
+      githubRepo: "",
+      email: "",
+      organization: "",
     },
   });
 
   const onSubmit = (data: FormValues) => {
-    console.log({
-      ...data,
-      issueTypes: tags,
-    });
+    const fullData = { ...data, contributors };
+    console.log("🔧 Project Data:", fullData);
+    // call backend/api here
   };
 
-  const addTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && tagInput.trim() !== "") {
+  const addContributor = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && contributorInput.trim()) {
       e.preventDefault();
-      if (!tags.includes(tagInput.trim())) {
-        setTags([...tags, tagInput.trim()]);
-        setTagInput("");
+      if (!contributors.includes(contributorInput.trim())) {
+        setContributors([...contributors, contributorInput.trim()]);
+        setContributorInput("");
       }
     }
   };
 
-  const removeTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
+  const removeContributor = (id: string) => {
+    setContributors(contributors.filter((c) => c !== id));
   };
 
   return (
-    <div className="w-full max-w-4xl h-screen mx-auto p-10 bg-white shadow rounded-lg">
-      <h2 className="text-3xl font-bold mb-6 py-10 text-gray-800">Create Issue</h2>
+    <div className="w-full max-w-4xl h-auto mx-auto p-10 bg-white shadow rounded-lg">
+      <h2 className="text-3xl font-bold mb-6 py-10 text-gray-800">Create Project</h2>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-          {/* Issue Name */}
-          <div className="mt-5 pt-5 mb-2 pb-3 ">
+          {/* Project Name */}
           <FormField
             control={form.control}
-            name="name"
+            name="projectName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Issue Name</FormLabel>
+                <FormLabel>Project Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter issue name" {...field} />
+                  <Input placeholder="Enter project name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-            </div>
 
-          {/* Deadline */}
-          <div className="my-2 py-3 ">
+          {/* Init Type */}
           <FormField
             control={form.control}
-            name="deadline"
+            name="initType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Deadline</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
+                <FormLabel>Initialization Type</FormLabel>
+                <Select
+                  onValueChange={(val: "create" | "github") => {
+                    setInitType(val);
+                    field.onChange(val);
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="create">Create new project</SelectItem>
+                    <SelectItem value="github">Initialize from GitHub</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
-            </div>
-          {/* Issue Type (Tags) */}
-          <div className="my-2 py-3 ">
-            <FormLabel>Issue Type</FormLabel>
-            <div className="flex flex-wrap gap-2 mt-1 mb-2">
-              {tags.map((tag, idx) => (
+
+          {/* GitHub Repo */}
+          {initType === "github" && (
+            <FormField
+              control={form.control}
+              name="githubRepo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GitHub Repository URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://github.com/user/repo" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {/* Contributors */}
+          <div>
+            <FormLabel>Contributor GitHub IDs</FormLabel>
+            <div className="flex flex-wrap gap-2 mt-2 mb-2">
+              {contributors.map((id, idx) => (
                 <span
                   key={idx}
-                  className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                  className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm flex items-center gap-1"
                 >
-                  {tag}
+                  {id}
                   <button
-                    onClick={() => removeTag(tag)}
-                    className="text-xs text-red-500 hover:text-red-700"
+                    onClick={() => removeContributor(id)}
                     type="button"
+                    className="text-xs text-red-500 hover:text-red-700"
                   >
                     ×
                   </button>
@@ -119,45 +166,50 @@ export default function ProjectForm() {
               ))}
             </div>
             <Input
-              placeholder="Type and press enter"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={addTag}
+              placeholder="Type GitHub ID and press enter"
+              value={contributorInput}
+              onChange={(e) => setContributorInput(e.target.value)}
+              onKeyDown={addContributor}
             />
           </div>
 
-          {/* Assignee */}
-          <div className="my-2 py-3 ">
+          {/* Email */}
           <FormField
             control={form.control}
-            name="assignee"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assignee</FormLabel>
+                <FormLabel>Your Email</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select assignee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="alice">Alice</SelectItem>
-                      <SelectItem value="bob">Bob</SelectItem>
-                      <SelectItem value="charlie">Charlie</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input type="email" placeholder="you@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          </div>
 
-          {/* Submit */}
-          <Button type="submit" className="w-full">
-            Create Issue
+          {/* Organization */}
+          <FormField
+            control={form.control}
+            name="organization"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>GitHub Organization</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., openai-org" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" className="w-full mt-4">
+            Initialize Project
           </Button>
         </form>
       </Form>
     </div>
   );
-}
+};
+
+export default ProjectForm;

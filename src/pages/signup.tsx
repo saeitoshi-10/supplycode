@@ -1,5 +1,5 @@
 
-const Login = () => {
+const Signup = () => {
   return (
     <div className="max-w-md h-screen mx-auto text-center mt-50 p-4">
       <h2 className="text-3xl font-bold text-gray-900 mb-2">team<span className="text-blue-500">.</span></h2>
@@ -36,4 +36,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;
