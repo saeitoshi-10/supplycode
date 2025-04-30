@@ -1,16 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiPlus } from "react-icons/fi";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {CustomCalendar} from "@/components/MeetingUI/calendar";
-import axios from "axios";
+import { Link } from "react-router-dom";
 import {Project,Issue,ProjectsResponse} from "../models/project.types";
 import { useNavigate } from "react-router-dom";
 
 
 const ProjectDashboard = () => {
-  const [projects, setProjects] = useState<ProjectsResponse>({ asCreator: [], asContributor: [] });
+  const [projects] = useState<ProjectsResponse>({ asCreator: [], asContributor: [] });
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
@@ -89,13 +88,18 @@ const ProjectDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-10 overflow-auto bg-blue-50 mt-15">
-        <div className="flex justify-between items-center mb-12">
+      <div className="flex-1 p-7 overflow-auto bg-blue-50 mt-15">
+        <div className="flex justify-between items-center mb-15">
           <h1 className="text-4xl font-bold text-blue-700">Projects</h1>
-          <Button className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-5 py-2.5 rounded-lg shadow">
-            <FiPlus className="text-lg" /> New Project
-          </Button>
+          <Link
+            to="/create-project"
+            className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-5 py-2.5 rounded-lg shadow"
+          >
+            <FiPlus className="text-lg" />
+            New Project
+          </Link>
         </div>
+
 
         {renderProjects("Created by Me", projects.asCreator, navigate)}
         {renderProjects("Contributing To", projects.asContributor, navigate)}

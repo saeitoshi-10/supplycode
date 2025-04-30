@@ -9,6 +9,7 @@ import Signup from './pages/signup';
 import ProjectForm from './pages/projectform';
 import CreateFeaturePage from './pages/CreateFeature';
 import ProjectDashboard from './pages/listprojects';
+import SubmitPage from './pages/issueSubmission';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path='/services' element={<Services />} />
           <Route path='/contact' element={<Contact />} />
           <Route path='/' element={<Home />} />
+          <Route path='/submit' element={<SubmitPage/>} />
           <Route path='/milestone' element={<MilestoneBoard />} /> 
           <Route path='/signup' element={<Signup />} />
           <Route path='/create-project' element={<ProjectForm />} />
