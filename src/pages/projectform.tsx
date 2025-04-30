@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Form,
   FormField,
@@ -204,7 +205,9 @@ const ProjectForm = () => {
           />
 
           <Button type="submit" className="w-full mt-4">
-            Initialize Project
+            <Link to="/dashboard">
+              Initialize Project
+            </Link>
           </Button>
         </form>
       </Form>

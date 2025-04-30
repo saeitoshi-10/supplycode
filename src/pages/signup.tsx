@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 
 const Signup = () => {
   return (
@@ -13,7 +14,9 @@ const Signup = () => {
       />
 
       <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded mb-4 transition">
-        Get started for free
+        <Link to="/dashboard">
+          Get started for free
+        </Link>
       </button>
 
       <div className="text-gray-500 text-sm mb-4">or</div>
