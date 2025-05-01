@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,14 @@ type FileEntry = {
 };
 
 export default function SubmitPage() {
-  const [searchParams] = useSearchParams(); 
+  const [searchParams] = useSearchParams();
   const projectId = searchParams.get("projectid");
   const issueId = searchParams.get("issueid");
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
+  const [submitterName, setSubmitterName] = useState("");
+  const [linkName, setLinkName] = useState(""); // New: link name input
+  const [commandText, setCommandText] = useState(""); // New: command input (comma separated)
   const [preFiles, setPreFiles] = useState<FileEntry[]>([]);
   const [postFiles, setPostFiles] = useState<FileEntry[]>([]);
   const [dialogState, setDialogState] = useState<{ type: "pre" | "post"; open: boolean }>({ type: "pre", open: false });
@@ -28,23 +30,7 @@ export default function SubmitPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!issueId) return;
-    setLoading(true);
-    fetch(`http://localhost:3001/projects/${projectId}/issues/${issueId}/submission`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load submission');
-        return res.json();
-      })
-      .then((data: { name: string; preFiles: FileEntry[]; postFiles: FileEntry[] }) => {
-        setName(data.name);
-        setPreFiles(data.preFiles);
-        setPostFiles(data.postFiles);
-      })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [projectId, issueId]);
-
+  
   const handleAddFile = () => {
     const entry = { ...newFileData };
     if (dialogState.type === "pre") setPreFiles(prev => [...prev, entry]);
@@ -55,46 +41,45 @@ export default function SubmitPage() {
   };
 
   const handleSubmit = () => {
-    setLoading(true);
     setError(null);
-
+  
     const materials = preFiles.reduce((acc, file) => {
       acc[file.filename] = { sha256: file.hash };
       return acc;
     }, {} as Record<string, { sha256: string }>);
-
+  
     const products = postFiles.reduce((acc, file) => {
       acc[file.filename] = { sha256: file.hash };
       return acc;
     }, {} as Record<string, { sha256: string }>);
-
+  
+    const commandArray = commandText
+      .split(",")
+      .map(str => str.trim())
+      .filter(str => str.length > 0);
+  
     const linkPayload = {
       _type: "link",
-      name: "submit", 
-      command: ["submit", `project:${projectId}`, `issue:${issueId}`],
+      name: linkName,
+      command: commandArray,
       materials,
       products,
     };
-
-    const url = `http://localhost:3001/projects/${projectId}/issues/${issueId}/submission`;
-    const method = issueId ? 'PUT' : 'POST';
-
-    fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(linkPayload),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Submission failed');
-        return res.json();
-      })
-      .then(() => {
-        navigate(`/projects/${projectId}/issues/${issueId}/submission`);
-      })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
+  
+    const jsonStr = JSON.stringify(linkPayload, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const uri = URL.createObjectURL(blob);
+  
+    const a = document.createElement("a");
+    a.href = uri;
+    a.download = `submission-${projectId}-${issueId || "new"}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(uri);
+  
+    navigate(`/dashboard`);
   };
-
   const closeDialog = () => {
     setDialogState({ ...dialogState, open: false });
   };
@@ -115,12 +100,30 @@ export default function SubmitPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-blue-700 p-2">Name</Label>
+            <Label className="text-blue-700 p-2">Your Name</Label>
             <Input
               className="border-blue-300 focus:ring-blue-400"
               placeholder="Enter your name"
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={submitterName}
+              onChange={e => setSubmitterName(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-blue-700 p-2">Link Name</Label>
+            <Input
+              className="border-blue-300 focus:ring-blue-400"
+              placeholder='E.g., "submit"'
+              value={linkName}
+              onChange={e => setLinkName(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-blue-700 p-2">Command (comma-separated)</Label>
+            <Input
+              className="border-blue-300 focus:ring-blue-400"
+              placeholder='E.g., submit, project:abc, issue:123'
+              value={commandText}
+              onChange={e => setCommandText(e.target.value)}
             />
           </div>
           <p className="text-sm text-gray-600">
@@ -136,57 +139,31 @@ export default function SubmitPage() {
         </TabsList>
 
         <TabsContent value="pre">
-          <Card className="mt-4 border-blue-300">
-            <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-blue-700">Pre-Commit Files</CardTitle>
-              <Dialog open={dialogState.open && dialogState.type === "pre"}>
-                <DialogTrigger asChild>
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => setDialogState({ type: "pre", open: true })}
-                  >
-                    Add File
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-white border-blue-300">
-                  <FileDialogForm
-                    newFileData={newFileData}
-                    setNewFileData={setNewFileData}
-                    handleAddFile={handleAddFile}
-                    closeDialog={closeDialog}
-                  />
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>{renderFileList(preFiles)}</CardContent>
-          </Card>
+          <FileSection
+            title="Pre-Commit Files"
+            files={preFiles}
+            dialogType="pre"
+            dialogState={dialogState}
+            setDialogState={setDialogState}
+            newFileData={newFileData}
+            setNewFileData={setNewFileData}
+            handleAddFile={handleAddFile}
+            closeDialog={closeDialog}
+          />
         </TabsContent>
 
         <TabsContent value="post">
-          <Card className="mt-4 border-blue-300">
-            <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-blue-700">Post-Commit Files</CardTitle>
-              <Dialog open={dialogState.open && dialogState.type === "post"}>
-                <DialogTrigger asChild>
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => setDialogState({ type: "post", open: true })}
-                  >
-                    Add File
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-white border-blue-300">
-                  <FileDialogForm
-                    newFileData={newFileData}
-                    setNewFileData={setNewFileData}
-                    handleAddFile={handleAddFile}
-                    closeDialog={closeDialog}
-                  />
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>{renderFileList(postFiles)}</CardContent>
-          </Card>
+          <FileSection
+            title="Post-Commit Files"
+            files={postFiles}
+            dialogType="post"
+            dialogState={dialogState}
+            setDialogState={setDialogState}
+            newFileData={newFileData}
+            setNewFileData={setNewFileData}
+            handleAddFile={handleAddFile}
+            closeDialog={closeDialog}
+          />
         </TabsContent>
       </Tabs>
 
@@ -197,6 +174,35 @@ export default function SubmitPage() {
         Submit Project
       </Button>
     </motion.div>
+  );
+}
+
+function FileSection({ title, files, dialogType, dialogState, setDialogState, newFileData, setNewFileData, handleAddFile, closeDialog }: any) {
+  return (
+    <Card className="mt-4 border-blue-300">
+      <CardHeader className="flex justify-between items-center">
+        <CardTitle className="text-blue-700">{title}</CardTitle>
+        <Dialog open={dialogState.open && dialogState.type === dialogType}>
+          <DialogTrigger asChild>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => setDialogState({ type: dialogType, open: true })}
+            >
+              Add File
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-white border-blue-300">
+            <FileDialogForm
+              newFileData={newFileData}
+              setNewFileData={setNewFileData}
+              handleAddFile={handleAddFile}
+              closeDialog={closeDialog}
+            />
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent>{renderFileList(files)}</CardContent>
+    </Card>
   );
 }
 

@@ -19,14 +19,14 @@ interface RulePattern {
 
 export default function CreateFeaturePage() {
   const [searchParams] = useSearchParams();
-const projectId = searchParams.get('projectId');
+  const projectId = searchParams.get('projectId');
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
   const [deadline, setDeadline] = useState<Date | undefined>(new Date());
   const [labelsInput, setLabelsInput] = useState("");
   const [labels, setLabels] = useState<string[]>([]);
-
 
   const [expectedCommand, setExpectedCommand] = useState("");
 
@@ -81,9 +81,9 @@ const projectId = searchParams.get('projectId');
   };
 
   const handleSubmit = () => {
-    if (!projectId){ 
-    console.error("Project ID is missing");
-    return;
+    if (!projectId) {
+      console.error("Project ID is missing");
+      return;
     }
     setLoading(true);
     setError(null);
@@ -93,7 +93,7 @@ const projectId = searchParams.get('projectId');
       deadline: deadline?.toISOString() || "",
       labels,
       _type: "step",
-      name: "fetch",
+      name,
       expected_command: expectedCommand.split(" ").filter(Boolean),
       expected_materials: materials.map(m => [m.rule, m.pattern]),
       expected_products: products.map(p => [p.rule, p.pattern]),
@@ -104,7 +104,7 @@ const projectId = searchParams.get('projectId');
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      credentials: 'include' 
+      credentials: 'include'
     })
       .then(res => {
         console.log(res);
@@ -126,7 +126,7 @@ const projectId = searchParams.get('projectId');
       <Card className="w-full max-w-3xl mx-auto p-6 shadow-xl border">
         <CardContent className="space-y-6">
           <h2 className="text-2xl font-semibold tracking-tight">
-            Create Issue 
+            Create Issue
           </h2>
 
           {/* Title */}
@@ -191,6 +191,17 @@ const projectId = searchParams.get('projectId');
               value={labelsInput}
               onChange={e => setLabelsInput(e.target.value)}
               onKeyDown={addLabel}
+            />
+          </div>
+
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g. build-step"
+              value={name}
+              onChange={e => setName(e.target.value)}
             />
           </div>
 
@@ -263,7 +274,7 @@ const projectId = searchParams.get('projectId');
             </ul>
           </div>
 
-          <Button className="w-full" onClick={handleSubmit} disabled={!title || !deadline}>
+          <Button className="w-full" onClick={handleSubmit} disabled={!title || !deadline || !name}>
             Create Feature
           </Button>
         </CardContent>
