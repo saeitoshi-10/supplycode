@@ -1,108 +1,110 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link} from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiPlus } from "react-icons/fi";
+import Cookies from "js-cookie";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomCalendar } from "@/components/MeetingUI/calendar";
 import { Project, Issue, ProjectsResponse } from "../models/project.types";
 
-const dummyProjects: ProjectsResponse = {
-  asCreator: [
-    {
-      id: "p1",
-      name: "Project Alpha",
-      organization: "Org A",
-      creator: "Alice",
-      contributors: ["u2", "u3"],
-      issues: [
-        { id: "1", title: "Design Mockups",   deadline: "2025-05-01", labels: ["Design"],        attachments: 2 },
-        { id: "2", title: "API Spec",          deadline: "2025-05-05", labels: ["Backend"],       attachments: 1 },
-      ],
-    },
-    {
-      id: "p2",
-      name: "Project Gamma",
-      organization: "Org C",
-      creator: "Alice",
-      contributors: ["u4"],
-      issues: [
-        { id: "3", title: "User Testing",      deadline: "2025-06-10", labels: ["QA"],            attachments: 0 },
-      ],
-    },
-  ],
-  asContributor: [
-    {
-      id: "p3",
-      name: "Project Beta",
-      organization: "Org B",
-      creator: "Bob",
-      contributors: ["Alice"],
-      issues: [
-        { id: "4", title: "Prototype Dev",    deadline: "2025-05-20", labels: ["Frontend","Backend"], attachments: 3 },
-        { id: "5", title: "Client Review",     deadline: "2025-05-25", labels: ["Meeting"],        attachments: 0 },
-      ],
-    },
-  ],
-};
-
 const ProjectDashboard: React.FC = () => {
-  const [projects] = useState<ProjectsResponse>(dummyProjects);
   const navigate = useNavigate();
+  const [projects, setProjects] = useState<ProjectsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // return the issue with the nearest upcoming deadline
+  const authToken = Cookies.get("authToken");
+  
+
+  // Fetch projects from API
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const user = Cookies.get("user");
+      const userId = user ? JSON.parse(user)._id : "";
+      try {
+        const res = await fetch(`http://localhost:5000/api/project/projects/${userId}`, {
+          credentials : "include",
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch projects");
+        }
+
+        const data: ProjectsResponse = await res.json();
+        setProjects(data);
+      } catch (err) {
+        console.error(err);
+        setProjects({ asCreator: [], asContributor: [] }); // fallback empty state
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (authToken) {
+      fetchProjects();
+    }
+  }, [authToken]);
+
+  // Redirect to login if no authToken
+  // if (!authToken) {
+  //   return <Navigate to="/login" replace />;
+  // }
+
   const getClosestIssue = (issues: Issue[]) =>
     [...issues].sort(
       (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
     )[0];
 
-  const renderProjects = (title: string, list: Project[]) => (
-    <div className="mb-12">
-      <h2 className="text-2xl font-bold text-blue-700 mb-6">{title}</h2>
-      <div className="grid grid-cols-3 gap-8">
-        {list.map((proj) => {
-          const closest = getClosestIssue(proj.issues);
-          return (
-            <motion.div
-              key={proj.id}
-              whileHover={{ scale: 1.03 }}
-              className="bg-white rounded-xl p-5 shadow-md border border-blue-100 cursor-pointer"
-              onClick={() => navigate(`/milestone?projectid=${proj.id}`)}
-            >
-              <div className="mb-3">
-                <h3 className="text-xl font-semibold text-blue-600">{proj.name}</h3>
-                <p className="text-sm text-gray-500">{proj.organization}</p>
-                <p className="text-sm text-gray-400">By {proj.creator}</p>
-              </div>
-              {closest ? (
-                <Card className="border-none shadow-none bg-blue-50">
-                  <CardContent className="p-4 space-y-2">
-                    <div className="text-sm font-medium text-blue-700">{closest.title}</div>
-                    <div className="text-xs text-blue-400">Due {closest.deadline}</div>
-                    <div className="flex flex-wrap gap-2">
-                      {closest.labels?.map((l) => (
-                        <span key={l} className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded">
-                          {l}
-                        </span>
-                      ))}
-                    </div>
-                    {closest.attachments !== undefined && (
-                      <div className="text-xs text-blue-300">
-                        📎 {closest.attachments} attachment
-                        {closest.attachments > 1 ? "s" : ""}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <p className="text-sm text-blue-300">No issues yet</p>
-              )}
-            </motion.div>
-          );
-        })}
+    const renderProjects = (title: string, list: Project[]) => (
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold text-blue-700 mb-6">{title}</h2>
+        {list.length === 0 ? (
+          <p className="text-gray-400 italic">No projects here yet.</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-8">
+            {list.map((proj) => {
+              const closest = getClosestIssue(proj.issues);
+              return (
+                <motion.div
+                  key={proj._id}
+                  whileHover={{ scale: 1.03 }}
+                  className="bg-white rounded-xl p-5 shadow-md border border-blue-100 cursor-pointer"
+                  onClick={() => navigate(`/issueboard?projectid=${proj._id}`)}
+                >
+                  <div className="mb-3">
+                    <h3 className="text-xl font-semibold text-blue-600">{proj.name}</h3>
+                    <p className="text-sm text-gray-500">{proj.organization}</p>
+                    <p className="text-sm text-gray-400">By {proj.creator}</p>
+                  </div>
+    
+                  {closest ? (
+                    <Card className="border-none shadow-none bg-blue-50">
+                      <CardContent className="p-4 space-y-2">
+                        <div className="text-sm font-medium text-blue-700">{closest.title}</div>
+                        <div className="text-xs text-blue-400">Due {closest.deadline}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {closest.labels?.map((l) => (
+                            <span
+                              key={l}
+                              className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded"
+                            >
+                              {l}
+                            </span>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <p className="text-sm text-blue-300">No issues yet</p>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+    
 
   return (
     <div className="flex h-screen bg-white">
@@ -121,7 +123,7 @@ const ProjectDashboard: React.FC = () => {
         <div className="flex justify-between items-center mb-15">
           <h1 className="text-4xl font-bold text-blue-700">Projects</h1>
           <Link
-            to="/create-project"
+            to="/createproject"
             className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-5 py-2.5 rounded-lg shadow"
           >
             <FiPlus className="text-lg" />
@@ -129,8 +131,14 @@ const ProjectDashboard: React.FC = () => {
           </Link>
         </div>
 
-        {renderProjects("Created by Me", projects.asCreator)}
-        {renderProjects("Contributing To", projects.asContributor)}
+        {loading ? (
+          <p className="text-blue-400">Loading projects...</p>
+        ) : (
+          <>
+            {renderProjects("Created by Me", projects?.asCreator ?? [])}
+            {renderProjects("Contributing To", projects?.asContributor ?? [])}
+          </>
+        )}
       </div>
 
       {/* Calendar Sidebar */}

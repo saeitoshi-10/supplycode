@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,25 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { motion } from "framer-motion";
 
 type FileEntry = {
   filename: string;
   hash: string;
-  file: File | null;
-  changeType: string;
 };
 
-
 export default function SubmitPage() {
-  const [searchParams] = useSearchParams();                      // ← hook for query params :contentReference[oaicite:0]{index=0}
+  const [searchParams] = useSearchParams(); 
   const projectId = searchParams.get("projectid");
   const issueId = searchParams.get("issueid");
   const navigate = useNavigate();
@@ -34,7 +24,7 @@ export default function SubmitPage() {
   const [preFiles, setPreFiles] = useState<FileEntry[]>([]);
   const [postFiles, setPostFiles] = useState<FileEntry[]>([]);
   const [dialogState, setDialogState] = useState<{ type: "pre" | "post"; open: boolean }>({ type: "pre", open: false });
-  const [newFileData, setNewFileData] = useState<FileEntry>({ filename: "", hash: "", file: null, changeType: "changed" });
+  const [newFileData, setNewFileData] = useState<FileEntry>({ filename: "", hash: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,27 +50,14 @@ export default function SubmitPage() {
     if (dialogState.type === "pre") setPreFiles(prev => [...prev, entry]);
     else setPostFiles(prev => [...prev, entry]);
 
-    setNewFileData({ filename: "", hash: "", file: null, changeType: "changed" });
+    setNewFileData({ filename: "", hash: "" });
     setDialogState(prev => ({ ...prev, open: false }));
   };
-
-  const renderFileList = (files: FileEntry[]) => (
-    <div className="grid gap-3">
-      {files.map((file, idx) => (
-        <div key={idx} className="rounded-xl border p-4 bg-blue-50/40">
-          <div className="font-medium text-blue-800">{file.filename}</div>
-          <div className="text-sm text-blue-700">{file.changeType} — {file.file?.name}</div>
-          <div className="text-xs text-blue-500">Hash: {file.hash}</div>
-        </div>
-      ))}
-    </div>
-  );
 
   const handleSubmit = () => {
     setLoading(true);
     setError(null);
 
-    // Build link object in expected framework
     const materials = preFiles.reduce((acc, file) => {
       acc[file.filename] = { sha256: file.hash };
       return acc;
@@ -93,7 +70,7 @@ export default function SubmitPage() {
 
     const linkPayload = {
       _type: "link",
-      name: "submit",
+      name: "submit", 
       command: ["submit", `project:${projectId}`, `issue:${issueId}`],
       materials,
       products,
@@ -116,6 +93,10 @@ export default function SubmitPage() {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  const closeDialog = () => {
+    setDialogState({ ...dialogState, open: false });
   };
 
   if (loading) return <p className="p-4">Loading...</p>;
@@ -168,50 +149,12 @@ export default function SubmitPage() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-white border-blue-300">
-                  <div className="space-y-4">
-                    <Label className="text-blue-700">File Name</Label>
-                    <Input
-                      className="border-blue-300 focus:ring-blue-400"
-                      value={newFileData.filename}
-                      onChange={e => setNewFileData({ ...newFileData, filename: e.target.value })}
-                    />
-
-                    <Label className="text-blue-700">Upload File</Label>
-                    <Input
-                      className="border-blue-300 focus:ring-blue-400"
-                      type="file"
-                      onChange={e => setNewFileData({ ...newFileData, file: e.target.files?.[0] || null })}
-                    />
-
-                    <Label className="text-blue-700">File Hash</Label>
-                    <Input
-                      className="border-blue-300 focus:ring-blue-400"
-                      value={newFileData.hash}
-                      onChange={e => setNewFileData({ ...newFileData, hash: e.target.value })}
-                    />
-
-                    <Label className="text-blue-700">File Change Type</Label>
-                    <Select
-                      value={newFileData.changeType}
-                      onValueChange={val => setNewFileData({ ...newFileData, changeType: val })}
-                    >
-                      <SelectTrigger className="border-blue-300 focus:ring-blue-400">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="changed">Changed</SelectItem>
-                        <SelectItem value="created">Created</SelectItem>
-                        <SelectItem value="deleted">Deleted</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={handleAddFile}
-                    >
-                      Submit File
-                    </Button>
-                  </div>
+                  <FileDialogForm
+                    newFileData={newFileData}
+                    setNewFileData={setNewFileData}
+                    handleAddFile={handleAddFile}
+                    closeDialog={closeDialog}
+                  />
                 </DialogContent>
               </Dialog>
             </CardHeader>
@@ -233,50 +176,12 @@ export default function SubmitPage() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-white border-blue-300">
-                  <div className="space-y-4">
-                    <Label className="text-blue-700">File Name</Label>
-                    <Input
-                      className="border-blue-300 focus:ring-blue-400"
-                      value={newFileData.filename}
-                      onChange={e => setNewFileData({ ...newFileData, filename: e.target.value })}
-                    />
-
-                    <Label className="text-blue-700">Upload File</Label>
-                    <Input
-                      className="border-blue-300 focus:ring-blue-400"
-                      type="file"
-                      onChange={e => setNewFileData({ ...newFileData, file: e.target.files?.[0] || null })}
-                    />
-
-                    <Label className="text-blue-700">File Hash</Label>
-                    <Input
-                      className="border-blue-300 focus:ring-blue-400"
-                      value={newFileData.hash}
-                      onChange={e => setNewFileData({ ...newFileData, hash: e.target.value })}
-                    />
-
-                    <Label className="text-blue-700">File Change Type</Label>
-                    <Select
-                      value={newFileData.changeType}
-                      onValueChange={val => setNewFileData({ ...newFileData, changeType: val })}
-                    >
-                      <SelectTrigger className="border-blue-300 focus:ring-blue-400">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="changed">Changed</SelectItem>
-                        <SelectItem value="created">Created</SelectItem>
-                        <SelectItem value="deleted">Deleted</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={handleAddFile}
-                    >
-                      Submit File
-                    </Button>
-                  </div>
+                  <FileDialogForm
+                    newFileData={newFileData}
+                    setNewFileData={setNewFileData}
+                    handleAddFile={handleAddFile}
+                    closeDialog={closeDialog}
+                  />
                 </DialogContent>
               </Dialog>
             </CardHeader>
@@ -294,3 +199,55 @@ export default function SubmitPage() {
     </motion.div>
   );
 }
+
+function FileDialogForm({ newFileData, setNewFileData, handleAddFile, closeDialog }: any) {
+  const handleClose = () => {
+    setNewFileData({ filename: "", hash: "" });
+    closeDialog();
+  };
+
+  return (
+    <div className="space-y-4">
+      <Label className="text-blue-700">File Name</Label>
+      <Input
+        className="border-blue-300 focus:ring-blue-400"
+        value={newFileData.filename}
+        onChange={(e) => setNewFileData({ ...newFileData, filename: e.target.value })}
+      />
+      <Label className="text-blue-700">File Hash</Label>
+      <Input
+        className="border-blue-300 focus:ring-blue-400"
+        value={newFileData.hash}
+        onChange={(e) => setNewFileData({ ...newFileData, hash: e.target.value })}
+      />
+      <Button
+        className="w-full bg-blue-600 hover:bg-blue-700"
+        onClick={() => {
+          handleAddFile();
+          handleClose();
+        }}
+      >
+        Submit File
+      </Button>
+      <Button
+        className="absolute top-2 right-2 text-white"
+        onClick={handleClose}
+      >
+        ×
+      </Button>
+    </div>
+  );
+}
+
+const renderFileList = (files: FileEntry[]) => {
+  return (
+    <div className="space-y-2">
+      {files.map((file, idx) => (
+        <div key={idx} className="flex justify-between items-center">
+          <span>{file.filename}</span>
+          <span className="text-sm text-gray-500">{file.hash}</span>
+        </div>
+      ))}
+    </div>
+  );
+};

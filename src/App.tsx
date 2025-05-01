@@ -1,31 +1,26 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import About from './pages/About';
-import Services from './pages/Services';
-import Contact from './pages/Contact';
-import MilestoneBoard from './pages/Meeting';
 import Signup from './pages/signup';
 import ProjectForm from './pages/projectform';
-import CreateFeaturePage from './pages/CreateFeature';
+import CreateFeaturePage from './pages/CreateIssue';
 import ProjectDashboard from './pages/listprojects';
 import SubmitPage from './pages/issueSubmission';
+import Login from './pages/Login';
+import LandingPage from './pages/Home';
+import IssueBoard from './pages/IssueDashboard';
 
 export default function App() {
   return (
     <Router>
       <Layout>
         <Routes>
-          <Route path='/home' element={<Home />} />
-          <Route path='/about' element={<About />} />
-          <Route path='/services' element={<Services />} />
-          <Route path='/contact' element={<Contact />} />
-          <Route path='/' element={<Home />} />
+          <Route path='/' element={<LandingPage />} />
           <Route path='/submit' element={<SubmitPage/>} />
-          <Route path='/milestone' element={<MilestoneBoard />} /> 
+          <Route path='/issueboard' element={<IssueBoard />} /> 
           <Route path='/signup' element={<Signup />} />
-          <Route path='/create-project' element={<ProjectForm />} />
-          <Route path='/createfeature' element={<CreateFeaturePage />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/createproject' element={<ProjectForm />} />
+          <Route path='/createissue' element={<CreateFeaturePage />} />
           <Route path='/dashboard' element={<ProjectDashboard />} />
         </Routes>
       </Layout>
